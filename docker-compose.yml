@@ -1,0 +1,63 @@
+version: "3"
+
+services:
+  app:
+    container_name: zimran_core
+    build: .
+    depends_on:
+      - db
+    env_file:
+      - .env
+    command: sh ./runapp.sh
+    ports:
+      - 8004:8000
+    restart: always
+    networks:
+      - common-net
+      - ext-network
+
+  db:
+    image: postgres:14-alpine
+    container_name: zimran_db
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PWD}
+    ports:
+      - ${DB_PORT}:5432
+    networks:
+      - common-net
+
+  celery:
+    container_name: zimran_celery
+    restart: always
+    build: .
+    env_file:
+      - .env
+    command: sh ./runcelery.sh
+    depends_on:
+      - db
+      - app
+      - rabbitmq
+    networks:
+      - common-net
+
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    container_name: zimran_rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./data/rabbitmq/:/var/lib/rabbitmq/mnesia/
+    networks:
+      - common-net
+
+networks:
+  common-net:
+    driver: bridge
+  ext-network:
+    external: true
