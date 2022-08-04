@@ -16,3 +16,5 @@ Launch
 ```sh
 docker-compose up --build -d
 ```
+
+Documentation on swagger on link http://localhost:8004/docs
